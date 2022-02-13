@@ -4,11 +4,12 @@ import dotenv from "dotenv";
 import connectMongo from "./config/db.js";
 import MovieRouters from "./routes/movieRoutes.js";
 import AuthRouter from "./routes/authRouter.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 const app = express();
 const port = process.env.SERVER_PORT;
-
+app.use(cookieParser());
 app.use(cors());
 app.use(express.json());
 

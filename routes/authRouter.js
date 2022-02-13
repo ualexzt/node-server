@@ -1,6 +1,11 @@
 import express from "express";
 import { check } from "express-validator";
-import { login, signup } from "../controllers/AuthController.js";
+import {
+  login,
+  logout,
+  refresh,
+  signup,
+} from "../controllers/AuthController.js";
 
 const router = express.Router();
 
@@ -21,7 +26,10 @@ router.post(
 );
 
 // Auth logout
-router.post("/signout");
+router.post("/logout", logout);
+
+// Refresh Token
+router.get("/refresh", refresh);
 
 // Get user
 router.get("/user", async (req, res) => {});

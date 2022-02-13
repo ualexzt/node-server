@@ -1,19 +1,9 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import User from "../models/User.js";
 import Role from "../models/Role.js";
 import { validationResult } from "express-validator";
-
-// Generate JWT token
-const generateAccessToken = (id, roles) => {
-  const secret = process.env.PRIVATE_KEY;
-  const payload = {
-    id,
-    roles,
-  };
-  return jwt.sign(payload, secret, { expiresIn: "24h" });
-};
+import tokenService from "../service/tokenService.js";
 
 // Login
 const login = async (req, res) => {
@@ -27,8 +17,17 @@ const login = async (req, res) => {
     if (!validPassword) {
       res.status(400).json({ message: "Password not correct" });
     }
-    const token = generateAccessToken(user._id, user.roles);
-    return res.json({ token });
+
+    const tokens = tokenService.generateAccessToken({
+      id: user._id,
+      roles: user.roles,
+    });
+    await tokenService.tokenSave(user._id, tokens.refreshToken);
+    res.cookie("refreshToken", tokens.refreshToken, {
+      maxAge: 2592000000,
+      httpOnly: true,
+    });
+    return res.json({ ...tokens });
   } catch (error) {
     console.log(error);
   }
@@ -43,23 +42,44 @@ const signup = async (req, res) => {
     }
     const { username, email, password } = req.body;
     const candidate = await User.findOne({ email });
+
     if (candidate) {
-      return res.status(400).json({ message: "Registaration error" });
+      throw new Error("User with this email exists");
     }
     const hashPassword = bcrypt.hashSync(password, 7);
     const userRole = await Role.findOne({ value: "USER" });
-    const user = new User({
+    const user = await User.create({
       username,
       email,
       password: hashPassword,
       roles: userRole,
     });
-    await user.save();
+    const tokens = tokenService.generateAccessToken({
+      id: user._id,
+      roles: user.roles,
+    });
+    console.log(user._id, tokens.refreshToken);
+    await tokenService.tokenSave(user._id, tokens.refreshToken);
+    res.cookie("refreshToken", tokens.refreshToken, {
+      maxAge: 2592000000,
+      httpOnly: true,
+    });
 
-    return res.status(200).json(user);
+    return res.status(200).json({ ...tokens });
   } catch (error) {
-    return res.status(400).json({ message: "Registaration error", error });
+    console.log(error);
+    // return res.status(400).json({ message: "Registaration error", error });
   }
 };
+// Log out
+const logout = async (req, res, next) => {
+  try {
+  } catch (error) {}
+};
 
-export { login, signup };
+const refresh = async (req, res, next) => {
+  try {
+  } catch (error) {}
+};
+
+export { login, signup, logout, refresh };
