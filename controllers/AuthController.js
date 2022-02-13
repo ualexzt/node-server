@@ -58,7 +58,6 @@ const signup = async (req, res) => {
       id: user._id,
       roles: user.roles,
     });
-    console.log(user._id, tokens.refreshToken);
     await tokenService.tokenSave(user._id, tokens.refreshToken);
     res.cookie("refreshToken", tokens.refreshToken, {
       maxAge: 2592000000,
