@@ -11,11 +11,12 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(400).json({ message: "User not faund" });
+      throw new Error("User not faund");
     }
-    const validPassword = bcrypt.compare(password, user.password);
+    const validPassword = await bcrypt.compare(password, user.password);
+
     if (!validPassword) {
-      res.status(400).json({ message: "Password not correct" });
+      throw new Error("Password not correct");
     }
 
     const tokens = tokenService.generateAccessToken({
@@ -29,7 +30,7 @@ const login = async (req, res) => {
     });
     return res.json({ ...tokens });
   } catch (error) {
-    console.log(error);
+    return res.status(400).json({ message: error.message });
   }
 };
 
@@ -66,17 +67,20 @@ const signup = async (req, res) => {
 
     return res.status(200).json({ ...tokens });
   } catch (error) {
-    console.log(error);
-    // return res.status(400).json({ message: "Registaration error", error });
+    return res.status(400).json({ message: error.message });
   }
 };
 // Log out
-const logout = async (req, res, next) => {
+const logout = async (req, res) => {
   try {
+    const { refreshToken } = req.cookies;
+    res.clearCookie("refreshToken");
+    const token = await tokenService.removeToken(refreshToken);
+    return res.json(token);
   } catch (error) {}
 };
 
-const refresh = async (req, res, next) => {
+const refresh = async (req, res) => {
   try {
   } catch (error) {}
 };
