@@ -106,7 +106,9 @@ const refresh = async (req, res) => {
       httpOnly: true,
     });
 
-    return res.status(200).json({ ...tokens });
+    return res
+      .status(200)
+      .json({ ...tokens, user: { email: user.email, id: user._id } });
   } catch (error) {}
 };
 

@@ -9,6 +9,7 @@ const movieSchema = new mongoose.Schema({
   featured: { type: Boolean },
   description: { type: String },
   rate: { type: Number },
+  author: { type: String, ref: "User" },
 });
 
 const Movie = mongoose.model("Movie", movieSchema);
