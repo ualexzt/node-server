@@ -19,7 +19,7 @@ const login = async (req, res) => {
       throw new Error("Password not correct");
     }
 
-    const tokens = tokenService.generateAccessToken({
+    const tokens = tokenService.generateTokens({
       id: user._id,
       roles: user.roles,
     });
@@ -28,7 +28,7 @@ const login = async (req, res) => {
       maxAge: 2592000000,
       httpOnly: true,
     });
-    return res.json({ ...tokens });
+    return res.json({ ...tokens, user: { email: user.email, id: user._id } });
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
@@ -55,7 +55,7 @@ const signup = async (req, res) => {
       password: hashPassword,
       roles: userRole,
     });
-    const tokens = tokenService.generateAccessToken({
+    const tokens = tokenService.generateTokens({
       id: user._id,
       roles: user.roles,
     });
@@ -65,7 +65,9 @@ const signup = async (req, res) => {
       httpOnly: true,
     });
 
-    return res.status(200).json({ ...tokens });
+    return res
+      .status(200)
+      .json({ ...tokens, user: { email: user.email, id: user._id } });
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
@@ -77,11 +79,34 @@ const logout = async (req, res) => {
     res.clearCookie("refreshToken");
     const token = await tokenService.removeToken(refreshToken);
     return res.json(token);
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const refresh = async (req, res) => {
   try {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      throw new Error("User not aothorized");
+    }
+    const tokenData = tokenService.validateRefreshToken(refreshToken);
+    const tokenFromDb = tokenService.findToken(refreshToken);
+    if (!tokenData || !tokenFromDb) {
+      throw new Error("User not authorized");
+    }
+    const user = await User.findById(tokenData.id);
+    const tokens = tokenService.generateTokens({
+      id: user._id,
+      roles: user.roles,
+    });
+    await tokenService.tokenSave(user._id, tokens.refreshToken);
+    res.cookie("refreshToken", tokens.refreshToken, {
+      maxAge: 2592000000,
+      httpOnly: true,
+    });
+
+    return res.status(200).json({ ...tokens });
   } catch (error) {}
 };
 

@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 class TokenService {
   // Generate JWT token
-  generateAccessToken(payload) {
+  generateTokens(payload) {
     const accesToken = jwt.sign(payload, process.env.JWT_ACCESS_TOKEN, {
       expiresIn: "30m",
     });
@@ -28,6 +28,32 @@ class TokenService {
   async removeToken(refreshToken) {
     const tokenData = Token.deleteOne({ refreshToken });
     return tokenData;
+  }
+
+  // Find token
+  async findToken(refreshToken) {
+    const tokenData = Token.findOne({ refreshToken });
+    return tokenData;
+  }
+
+  // Validate access token
+  validateAccessToken(token) {
+    try {
+      const userData = jwt.verify(token, process.env.JWT_ACCESS_TOKEN);
+      return userData;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  // Validate refresh token
+  validateRefreshToken(token) {
+    try {
+      const userData = jwt.verify(token, process.env.JWT_REFRESH_TOKEN);
+      return userData;
+    } catch (error) {
+      return null;
+    }
   }
 }
 

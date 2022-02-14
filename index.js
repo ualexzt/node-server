@@ -10,7 +10,12 @@ dotenv.config();
 const app = express();
 const port = process.env.SERVER_PORT;
 app.use(cookieParser());
-app.use(cors());
+app.use(
+  cors({
+    credentials: true,
+    origin: process.env.CLIENT_URL,
+  })
+);
 app.use(express.json());
 
 // Api routers
